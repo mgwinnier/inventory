@@ -14,7 +14,9 @@ const skuList = [
     { name: "EHT SiB", sku: "008800400551" },
     { name: "M10 Rye", sku: "003938300228" },
     { name: "Birthday Bourbon", sku: "008112800289" },
-    { name: "Blantons Gold", sku: "008024400939" }
+    { name: "Blantons Gold", sku: "008024400939" },
+    { name: "RR15", sku: "072105900371" },
+    { name: "M20", sku: "003938300899" },
 ];
 
 const zipCode = "75204";  // Change ZIP if needed

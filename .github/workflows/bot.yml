@@ -26,4 +26,4 @@ jobs:
           echo "CHANNEL_ID=${{ secrets.CHANNEL_ID }}" >> $GITHUB_ENV
 
       - name: 🚀 Run Inventory Bot
-        run: node bot.js
+        run: node specs.js
