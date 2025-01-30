@@ -9,7 +9,11 @@ const skuList = [
     { name: "EHT SiB", sku: "008800400551" },
     { name: "M10 Rye", sku: "003938300228" },
     { name: "Birthday Bourbon", sku: "008112800289" },
-    { name: "Blantons Gold", sku: "008024400939" }
+    { name: "Blantons Gold", sku: "008024400939" },
+    { name: "RR15", sku: "072105900371" },
+    { name: "M20", sku: "003938300899" },
+    { name: "GTS", sku: "008800402784" },
+    { name: "Weller SiB", sku: "008800403964" },
 ];
 
 const zipCode = "75204";
@@ -113,10 +117,10 @@ async function sendInventoryUpdates() {
 }
 
 // Run inventory check every 6 hours
-client.once("ready", () => {
+client.once("ready", async () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
-    sendInventoryUpdates(); // Run immediately on start
-    setInterval(sendInventoryUpdates, 6 * 60 * 60 * 1000); // Every 6 hours
+    await sendInventoryUpdates();  // Run inventory check once when the bot starts
+    client.destroy(); // Shut down the bot after sending the message
 });
 
 // Start the bot
