@@ -1,29 +1,35 @@
-name: Run Discord Inventory Bot
+name: Inventory Tracker Bot
 
 on:
   schedule:
     - cron: "0 */6 * * *"  # Runs every 6 hours
-  workflow_dispatch:  # Allows manual trigger
+  workflow_dispatch:  # Allows manual runs
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     steps:
-      - name: ⬇ Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🛠 Set Up Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: npm install
 
-      - name: 🔑 Set Up Environment Variables
+      - name: Debug Environment Variables
         run: |
-          echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" >> $GITHUB_ENV
-          echo "CHANNEL_ID=${{ secrets.CHANNEL_ID }}" >> $GITHUB_ENV
+          echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}"
+          echo "CHANNEL_ID=${{ secrets.CHANNEL_ID }}"
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
 
-      - name: 🚀 Run Inventory Bot
+      - name: Run Inventory Tracker Bot
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
         run: node specs.js
