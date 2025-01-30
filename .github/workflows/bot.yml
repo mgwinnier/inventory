@@ -22,8 +22,8 @@ jobs:
 
       - name: Debug Environment Variables
         run: |
-          echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}"
-          echo "CHANNEL_ID=${{ secrets.CHANNEL_ID }}"
+          echo "DISCORD_TOKEN is set: ${{ secrets.DISCORD_TOKEN != '' }}"
+          echo "CHANNEL_ID is set: ${{ secrets.CHANNEL_ID != '' }}"
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
