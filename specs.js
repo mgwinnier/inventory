@@ -18,7 +18,6 @@ const skuList = [
 
 const zipCode = "75204";
 const radius = "100";
-const fulfillment_nonce = "7bf1b33b1e";
 const inventoryFile = "inventory.json";
 
 // Load previous inventory from file
@@ -32,8 +31,31 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 const CHANNEL_ID = process.env.CHANNEL_ID;
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
-// Function to check inventory
+// ✅ Function to fetch the latest public fulfillment_nonce
+async function fetchNonce() {
+    try {
+        const response = await fetch("https://specsonline.com");
+        const body = await response.text();
+        const $ = cheerio.load(body);
+
+        // Extract the nonce from JavaScript
+        const scriptContent = $('script:contains("fulfillmentJS")').html();
+        const nonceMatch = scriptContent?.match(/"nonce":"(.*?)"/);
+        const nonce = nonceMatch ? nonceMatch[1] : null;
+
+        if (!nonce) throw new Error("⚠️ Could not find fulfillment_nonce.");
+        console.log(`✅ Found Nonce: ${nonce}`);
+        return nonce;
+    } catch (error) {
+        console.error("❌ Error fetching nonce:", error);
+        return "7bf1b33b1e"; // Fallback to last known public nonce
+    }
+}
+
+// ✅ Function to check inventory
 async function checkInventory(skuObj) {
+    const fulfillment_nonce = await fetchNonce(); // Always get the latest nonce
+
     try {
         const response = await fetch("https://specsonline.com/wp-admin/admin-ajax.php", {
             method: "POST",
@@ -82,7 +104,7 @@ async function checkInventory(skuObj) {
     }
 }
 
-// Function to send inventory updates to Discord
+// ✅ Function to send inventory updates to Discord
 async function sendInventoryUpdates() {
     let allChanges = [];
     for (let skuObj of skuList) {
@@ -116,12 +138,12 @@ async function sendInventoryUpdates() {
     }
 }
 
-// Run inventory check every 6 hours
+// ✅ Run inventory check every 6 hours
 client.once("ready", async () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
     await sendInventoryUpdates();  // Run inventory check once when the bot starts
     client.destroy(); // Shut down the bot after sending the message
 });
 
-// Start the bot
+// ✅ Start the bot
 client.login(DISCORD_TOKEN);
