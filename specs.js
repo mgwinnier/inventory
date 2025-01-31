@@ -9,11 +9,17 @@ const skuList = [
     { name: "EHT SiB", sku: "008800400551" },
     { name: "M10 Rye", sku: "003938300228" },
     { name: "Birthday Bourbon", sku: "008112800289" },
+    { name: "Blantons", sku: "008024400203" },
     { name: "Blantons Gold", sku: "008024400939" },
     { name: "RR15", sku: "072105900371" },
     { name: "M20", sku: "003938300899" },
     { name: "GTS", sku: "008800402784" },
     { name: "Weller SiB", sku: "008800403964" },
+    { name: "Weller 107", sku: "008800402564" },
+    { name: "EHT Rye", sku: "008800400550" },
+    { name: "EHT SiB", sku: "008800400549" },
+    { name: "Penelope Havana", sku: "008835214184" },
+    { name: "Michter's Toasted", sku: "003938300228" },
 ];
 
 const zipCode = "75204";
@@ -29,6 +35,7 @@ if (fs.existsSync(inventoryFile)) {
 // Initialize Discord Bot with GitHub Secrets for token and channel
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 const CHANNEL_ID = process.env.CHANNEL_ID;
+const NO_CHANGE_CHANNEL_ID = "1334889254328733766"; // New channel for no-change updates
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
 // ✅ Function to fetch the latest public fulfillment_nonce
@@ -130,11 +137,14 @@ async function sendInventoryUpdates() {
         skuList.forEach(({ name, sku }) => message += `- ${name} (${sku})\n`);
     }
 
-    const channel = client.channels.cache.get(CHANNEL_ID);
+    // Send message to appropriate channel based on changes
+    const channelId = changesExist ? CHANNEL_ID : NO_CHANGE_CHANNEL_ID;
+    const channel = client.channels.cache.get(channelId);
+    
     if (channel) {
         await channel.send(message);
     } else {
-        console.error("❌ Error: Unable to find the Discord channel.");
+        console.error(`❌ Error: Unable to find the Discord channel with ID: ${channelId}`);
     }
 }
 
