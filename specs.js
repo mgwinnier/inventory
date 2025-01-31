@@ -17,9 +17,10 @@ const skuList = [
     { name: "Weller SiB", sku: "008800403964" },
     { name: "Weller 107", sku: "008800402564" },
     { name: "EHT Rye", sku: "008800400550" },
-    { name: "EHT SiB", sku: "008800400549" },
+    { name: "EHT SmB", sku: "008800400549" },
     { name: "Penelope Havana", sku: "008835214184" },
     { name: "Michter's Toasted", sku: "003938300228" },
+    { name: "Weller Full Proof", sku: "008800403149" },
 ];
 
 const zipCode = "75204";
