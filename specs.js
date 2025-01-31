@@ -98,7 +98,7 @@ async function checkInventory(skuObj) {
             let prevQty = previousInventory[skuObj.sku]?.[storeName] ?? "Not tracked";
 
             if (prevQty !== "Not tracked" && prevQty !== qty) {
-                changes.push(`🔔 **${skuObj.name}** at **${storeName}** changed: ${prevQty} → ${qty}`);
+                changes.push(`**${skuObj.name}** at **${storeName}** changed: ${prevQty} → ${qty}`);
             }
         });
 

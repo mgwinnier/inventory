@@ -2,8 +2,8 @@ name: Inventory Tracker Bot
 
 on:
   schedule:
-    - cron: "0 */4 * * *"  # Runs every 4 hours
-  workflow_dispatch:  # Allows manual runs
+    - cron: "*/20 * * * *"  # Runs every 20 minutes
+  workflow_dispatch:  # Allows manual r
 
 jobs:
   run-bot:
