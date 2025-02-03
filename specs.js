@@ -21,6 +21,7 @@ const skuList = [
     { name: "Penelope Havana", sku: "008835214184" },
     { name: "Michter's Toasted", sku: "003938300228" },
     { name: "Weller Full Proof", sku: "008800403149" },
+    { name: "EHT Barrel Proof", sku: "008800400552" },
 ];
 
 const zipCode = "75204";
