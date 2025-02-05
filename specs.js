@@ -22,8 +22,11 @@ const skuList = [
     { name: "Michter's Toasted", sku: "003938300228" },
     { name: "Weller Full Proof", sku: "008800403149" },
     { name: "EHT Barrel Proof", sku: "008800400552" },
-    { name: "Eagle Rare", sku: "008800402134" }
-   
+    { name: "Eagle Rare", sku: "008800402134" },
+    { name: "JD Coy Hill", sku: "008218400763" },
+    { name: "JD 10 Year", sku: "008218400637" },
+    { name: "JD 12 Year", sku: "008218400638" },
+    { name: "OF 1924", sku: "008112800341" },
 ];
 
 const zipCode = "75204";
