@@ -1,6 +1,6 @@
 {
   "008800401858": {
-    "New Road": 2,
+    "New Road": 1,
     "Waco": 0,
     "Bryant Irvin": 0,
     "Hebron": 0,
@@ -10,7 +10,7 @@
     "The Colony": 0,
     "Lowry Crossing": 4,
     "Coit Rd Mr. G’s": 0,
-    "Marsh Lane": 2,
+    "Marsh Lane": 1,
     "Preston Center": 0,
     "Plano West": 0,
     "Dallas Superstore": 0,
@@ -568,13 +568,13 @@
     "Fort Worth - Hulen": 0,
     "Granbury": 0,
     "The Colony": 0,
-    "Lowry Crossing": 1,
+    "Lowry Crossing": 0,
     "Coit Rd Mr. G’s": 0,
     "Marsh Lane": 0,
     "Preston Center": 0,
     "Plano West": 1,
     "Dallas Superstore": 0,
-    "East Plano": 117,
+    "East Plano": 112,
     "Addison": 0,
     "Dalworthington": 0,
     "Lacy Lakeview": 0,
@@ -952,7 +952,7 @@
     "Lavon": 0
   },
   "008800402134": {
-    "New Road": 31,
+    "New Road": 29,
     "Waco": 0,
     "Bryant Irvin": 0,
     "Hebron": 0,
