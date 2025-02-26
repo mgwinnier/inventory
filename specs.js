@@ -26,6 +26,7 @@ const skuList = [
     { name: "JD Coy Hill", sku: "008218400763" },
     { name: "JD 10 Year", sku: "008218400637" },
     { name: "JD 12 Year", sku: "008218400638" },
+    { name: "JD 14 Year", sku: "008218400726" },
     { name: "OF 1924", sku: "008112800341" },
 ];
 
