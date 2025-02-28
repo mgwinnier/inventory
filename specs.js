@@ -28,6 +28,9 @@ const skuList = [
     { name: "JD 12 Year", sku: "008218400638" },
     { name: "JD 14 Year", sku: "008218400726" },
     { name: "OF 1924", sku: "008112800341" },
+    { name: "Forta Blanco", sku: "750222196610" },
+    { name: "Forta Reposado", sku: "750222196710" },
+    { name: "Forta Reposado", sku: "750222196810" },
 ];
 
 const zipCode = "75204";
