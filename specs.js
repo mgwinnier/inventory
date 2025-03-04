@@ -30,7 +30,8 @@ const skuList = [
     { name: "OF 1924", sku: "008112800341" },
     { name: "Forta Blanco", sku: "750222196610" },
     { name: "Forta Reposado", sku: "750222196710" },
-    { name: "Forta Reposado", sku: "750222196810" },
+    { name: "Forta Anejo", sku: "750222196810" },
+    { name: "Penelope 17year ALW", sku: "008835214260" },
 ];
 
 const zipCode = "75204";
