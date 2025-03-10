@@ -40,7 +40,7 @@ const zipCodes = {
     "78132": "1348635596054200340",  // New Braunfels, Texas
 };
 
-const NO_CHANGE_CHANNEL_ID = "1334889254328733766"; // New channel for no-change updates
+const NO_CHANGE_CHANNEL_ID = "1334889254328733766"; // Channel for no-change updates
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const inventoryFile = "inventory.json";
 
@@ -53,7 +53,7 @@ if (fs.existsSync(inventoryFile)) {
 // Initialize Discord Bot
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 
-// ✅ Fetch the latest public fulfillment_nonce
+// ✅ Fetch the latest public fulfillment_nonce (only once)
 async function fetchNonce() {
     try {
         const response = await fetch("https://specsonline.com");
@@ -74,9 +74,7 @@ async function fetchNonce() {
 }
 
 // ✅ Check inventory for a specific SKU at a specific zip code
-async function checkInventory(skuObj, zipCode) {
-    const fulfillment_nonce = await fetchNonce();
-
+async function checkInventory(skuObj, zipCode, fulfillment_nonce) {
     try {
         const response = await fetch("https://specsonline.com/wp-admin/admin-ajax.php", {
             method: "POST",
@@ -129,13 +127,14 @@ async function checkInventory(skuObj, zipCode) {
 
 // ✅ Send inventory updates to Discord
 async function sendInventoryUpdates() {
+    let fulfillment_nonce = await fetchNonce(); // Fetch nonce once before making requests
     let allChangesByZip = {};
 
     for (let zipCode of Object.keys(zipCodes)) {
         allChangesByZip[zipCode] = [];
 
         for (let skuObj of skuList) {
-            let result = await checkInventory(skuObj, zipCode);
+            let result = await checkInventory(skuObj, zipCode, fulfillment_nonce);
             allChangesByZip[zipCode].push(result);
         }
     }
