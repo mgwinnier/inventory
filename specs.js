@@ -126,7 +126,7 @@ async function checkInventory(skuObj) {
 // ✅ Function to send inventory updates to Discord
 async function sendInventoryUpdates() {
     let allChanges = [];
-    
+
     for (let skuObj of skuList) {
         let result = await checkInventory(skuObj);
         allChanges.push(result);
@@ -138,42 +138,45 @@ async function sendInventoryUpdates() {
     let currentMessage = "**📋 Inventory Update:**\n";
     let changesExist = false;
 
+    const MAX_MESSAGE_LENGTH = 2000;
+
     allChanges.forEach(({ skuObj, changes }) => {
         if (changes.length > 0) {
             changesExist = true;
             let header = `\n📢 **${skuObj.name}** (${skuObj.sku}):\n`;
             let changesText = changes.map(change => `- ${change}`).join("\n");
 
-            if ((currentMessage.length + header.length + changesText.length) > 2000) {
-                // If adding this SKU exceeds the limit, push the current message and start a new one
-                messageChunks.push(currentMessage);
-                currentMessage = "**📋 Inventory Update (Continued):**\n";
-            }
+            let potentialMessage = currentMessage + header + changesText + "\n";
 
-            currentMessage += header + changesText + "\n";
+            if (potentialMessage.length > MAX_MESSAGE_LENGTH) {
+                // If exceeding limit, store current message and start a new one
+                messageChunks.push(currentMessage);
+                currentMessage = "**📋 Inventory Update (Continued):**\n" + header + changesText + "\n";
+            } else {
+                currentMessage = potentialMessage;
+            }
         }
     });
 
     if (!changesExist) {
         currentMessage += "\n✅ No changes detected.\nChecked SKUs:\n";
         skuList.forEach(({ name, sku }) => {
-            if ((currentMessage.length + `- ${name} (${sku})\n`.length) > 2000) {
+            let skuEntry = `- ${name} (${sku})\n`;
+            if ((currentMessage.length + skuEntry.length) > MAX_MESSAGE_LENGTH) {
                 messageChunks.push(currentMessage);
                 currentMessage = "**📋 Inventory Update (Continued):**\n";
             }
-            currentMessage += `- ${name} (${sku})\n`;
+            currentMessage += skuEntry;
         });
     }
 
-    // Push any remaining content in currentMessage
     if (currentMessage.trim().length > 0) {
         messageChunks.push(currentMessage);
     }
 
-    // Send all message chunks sequentially
     const channelId = changesExist ? CHANNEL_ID : NO_CHANGE_CHANNEL_ID;
     const channel = client.channels.cache.get(channelId);
-    
+
     if (channel) {
         for (let msg of messageChunks) {
             await channel.send(msg);
@@ -182,6 +185,7 @@ async function sendInventoryUpdates() {
         console.error(`❌ Error: Unable to find the Discord channel with ID: ${channelId}`);
     }
 }
+
 
 
 // ✅ Run inventory check every 6 hours
