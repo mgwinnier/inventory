@@ -34,8 +34,14 @@ const skuList = [
     { name: "Penelope 17year ALW", sku: "008835214260" },
 ];
 
-const zipCode = "75204";
-const radius = "100";
+// Define zip codes and their corresponding Discord channels
+const zipCodes = {
+    "75204": process.env.CHANNEL_ID,  // Existing location
+    "78132": "1348635596054200340",  // New Braunfels, Texas
+};
+
+const NO_CHANGE_CHANNEL_ID = "1334889254328733766"; // New channel for no-change updates
+const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const inventoryFile = "inventory.json";
 
 // Load previous inventory from file
@@ -44,20 +50,16 @@ if (fs.existsSync(inventoryFile)) {
     previousInventory = JSON.parse(fs.readFileSync(inventoryFile, "utf8"));
 }
 
-// Initialize Discord Bot with GitHub Secrets for token and channel
+// Initialize Discord Bot
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
-const CHANNEL_ID = process.env.CHANNEL_ID;
-const NO_CHANGE_CHANNEL_ID = "1334889254328733766"; // New channel for no-change updates
-const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
-// ✅ Function to fetch the latest public fulfillment_nonce
+// ✅ Fetch the latest public fulfillment_nonce
 async function fetchNonce() {
     try {
         const response = await fetch("https://specsonline.com");
         const body = await response.text();
         const $ = cheerio.load(body);
 
-        // Extract the nonce from JavaScript
         const scriptContent = $('script:contains("fulfillmentJS")').html();
         const nonceMatch = scriptContent?.match(/"nonce":"(.*?)"/);
         const nonce = nonceMatch ? nonceMatch[1] : null;
@@ -67,13 +69,13 @@ async function fetchNonce() {
         return nonce;
     } catch (error) {
         console.error("❌ Error fetching nonce:", error);
-        return "7bf1b33b1e"; // Fallback to last known public nonce
+        return "7bf1b33b1e"; // Fallback nonce
     }
 }
 
-// ✅ Function to check inventory
-async function checkInventory(skuObj) {
-    const fulfillment_nonce = await fetchNonce(); // Always get the latest nonce
+// ✅ Check inventory for a specific SKU at a specific zip code
+async function checkInventory(skuObj, zipCode) {
+    const fulfillment_nonce = await fetchNonce();
 
     try {
         const response = await fetch("https://specsonline.com/wp-admin/admin-ajax.php", {
@@ -87,7 +89,7 @@ async function checkInventory(skuObj) {
                 zip: zipCode,
                 sku: skuObj.sku,
                 zero_inventory_check: "true",
-                radius: radius,
+                radius: "100",
                 fulfillment_nonce: fulfillment_nonce
             })
         });
@@ -107,93 +109,80 @@ async function checkInventory(skuObj) {
             let qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 0;
 
             storeData[storeName] = qty;
-            let prevQty = previousInventory[skuObj.sku]?.[storeName] ?? "Not tracked";
+            let prevQty = previousInventory[zipCode]?.[skuObj.sku]?.[storeName] ?? "Not tracked";
 
             if (prevQty !== "Not tracked" && prevQty !== qty) {
                 changes.push(`**${skuObj.name}** at **${storeName}** changed: ${prevQty} → ${qty}`);
             }
         });
 
-        previousInventory[skuObj.sku] = storeData;
-        return { skuObj, changes };
+        if (!previousInventory[zipCode]) previousInventory[zipCode] = {};
+        previousInventory[zipCode][skuObj.sku] = storeData;
+
+        return { skuObj, changes, zipCode };
 
     } catch (error) {
-        console.error(`❌ Error fetching inventory data for ${skuObj.name}:`, error);
-        return { skuObj, changes: ["❌ Error checking this SKU."] };
+        console.error(`❌ Error fetching inventory data for ${skuObj.name} in ${zipCode}:`, error);
+        return { skuObj, changes: ["❌ Error checking this SKU."], zipCode };
     }
 }
 
-// ✅ Function to send inventory updates to Discord
+// ✅ Send inventory updates to Discord
 async function sendInventoryUpdates() {
-    let allChanges = [];
+    let allChangesByZip = {};
 
-    for (let skuObj of skuList) {
-        let result = await checkInventory(skuObj);
-        allChanges.push(result);
+    for (let zipCode of Object.keys(zipCodes)) {
+        allChangesByZip[zipCode] = [];
+
+        for (let skuObj of skuList) {
+            let result = await checkInventory(skuObj, zipCode);
+            allChangesByZip[zipCode].push(result);
+        }
     }
 
     fs.writeFileSync(inventoryFile, JSON.stringify(previousInventory, null, 2));
 
-    let messageChunks = [];
-    let currentMessage = "**📋 Inventory Update:**\n";
-    let changesExist = false;
+    for (let [zipCode, allChanges] of Object.entries(allChangesByZip)) {
+        let messageChunks = [];
+        let currentMessage = `**📋 Inventory Update for ${zipCode}:**\n`;
+        let changesExist = false;
+        const MAX_MESSAGE_LENGTH = 2000;
 
-    const MAX_MESSAGE_LENGTH = 2000;
+        allChanges.forEach(({ skuObj, changes }) => {
+            if (changes.length > 0) {
+                changesExist = true;
+                let header = `\n📢 **${skuObj.name}** (${skuObj.sku}):\n`;
+                let changesText = changes.map(change => `- ${change}`).join("\n");
 
-    allChanges.forEach(({ skuObj, changes }) => {
-        if (changes.length > 0) {
-            changesExist = true;
-            let header = `\n📢 **${skuObj.name}** (${skuObj.sku}):\n`;
-            let changesText = changes.map(change => `- ${change}`).join("\n");
+                let potentialMessage = currentMessage + header + changesText + "\n";
 
-            let potentialMessage = currentMessage + header + changesText + "\n";
-
-            if (potentialMessage.length > MAX_MESSAGE_LENGTH) {
-                // If exceeding limit, store current message and start a new one
-                messageChunks.push(currentMessage);
-                currentMessage = "**📋 Inventory Update (Continued):**\n" + header + changesText + "\n";
-            } else {
-                currentMessage = potentialMessage;
+                if (potentialMessage.length > MAX_MESSAGE_LENGTH) {
+                    messageChunks.push(currentMessage);
+                    currentMessage = `**📋 Inventory Update for ${zipCode} (Continued):**\n` + header + changesText + "\n";
+                } else {
+                    currentMessage = potentialMessage;
+                }
             }
-        }
-    });
-
-    if (!changesExist) {
-        currentMessage += "\n✅ No changes detected.\nChecked SKUs:\n";
-        skuList.forEach(({ name, sku }) => {
-            let skuEntry = `- ${name} (${sku})\n`;
-            if ((currentMessage.length + skuEntry.length) > MAX_MESSAGE_LENGTH) {
-                messageChunks.push(currentMessage);
-                currentMessage = "**📋 Inventory Update (Continued):**\n";
-            }
-            currentMessage += skuEntry;
         });
-    }
 
-    if (currentMessage.trim().length > 0) {
-        messageChunks.push(currentMessage);
-    }
+        const channelId = changesExist ? zipCodes[zipCode] : NO_CHANGE_CHANNEL_ID;
+        const channel = client.channels.cache.get(channelId);
 
-    const channelId = changesExist ? CHANNEL_ID : NO_CHANGE_CHANNEL_ID;
-    const channel = client.channels.cache.get(channelId);
-
-    if (channel) {
-        for (let msg of messageChunks) {
-            await channel.send(msg);
+        if (channel) {
+            for (let msg of messageChunks) {
+                await channel.send(msg);
+            }
+        } else {
+            console.error(`❌ Error: Unable to find the Discord channel for zip ${zipCode}`);
         }
-    } else {
-        console.error(`❌ Error: Unable to find the Discord channel with ID: ${channelId}`);
     }
 }
 
-
-
-// ✅ Run inventory check every 6 hours
+// ✅ Start the bot and check inventory
 client.once("ready", async () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
-    await sendInventoryUpdates();  // Run inventory check once when the bot starts
-    client.destroy(); // Shut down the bot after sending the message
+    await sendInventoryUpdates();
+    client.destroy();
 });
 
-// ✅ Start the bot
 client.login(DISCORD_TOKEN);
