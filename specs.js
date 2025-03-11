@@ -34,7 +34,6 @@ const skuList = [
     { name: "Penelope 17year ALW", sku: "008835214260" },
 ];
 
-// Define zip codes and their corresponding Discord channels
 const zipCodes = {
     "75204": process.env.CHANNEL_ID,  // Existing location
     "78132": "1348635596054200340",  // New Braunfels, Texas
@@ -53,28 +52,24 @@ if (fs.existsSync(inventoryFile)) {
 // Initialize Discord Bot
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 
-// ✅ Fetch the latest public fulfillment_nonce (only once)
+// Fetch Nonce (per request to avoid expiration)
 async function fetchNonce() {
     try {
         const response = await fetch("https://specsonline.com");
         const body = await response.text();
         const $ = cheerio.load(body);
-
         const scriptContent = $('script:contains("fulfillmentJS")').html();
         const nonceMatch = scriptContent?.match(/"nonce":"(.*?)"/);
-        const nonce = nonceMatch ? nonceMatch[1] : null;
-
-        if (!nonce) throw new Error("⚠️ Could not find fulfillment_nonce.");
-        console.log(`✅ Found Nonce: ${nonce}`);
-        return nonce;
+        return nonceMatch ? nonceMatch[1] : "7bf1b33b1e"; // Default fallback nonce
     } catch (error) {
         console.error("❌ Error fetching nonce:", error);
         return "7bf1b33b1e"; // Fallback nonce
     }
 }
 
-// ✅ Check inventory for a specific SKU at a specific zip code
-async function checkInventory(skuObj, zipCode, fulfillment_nonce) {
+// Check Inventory
+async function checkInventory(skuObj, zipCode) {
+    let fulfillment_nonce = await fetchNonce();
     try {
         const response = await fetch("https://specsonline.com/wp-admin/admin-ajax.php", {
             method: "POST",
@@ -97,7 +92,6 @@ async function checkInventory(skuObj, zipCode, fulfillment_nonce) {
 
         const $ = cheerio.load(data.data);
         let stores = $(".single-store");
-
         let storeData = {};
         let changes = [];
 
@@ -116,25 +110,22 @@ async function checkInventory(skuObj, zipCode, fulfillment_nonce) {
 
         if (!previousInventory[zipCode]) previousInventory[zipCode] = {};
         previousInventory[zipCode][skuObj.sku] = storeData;
-
         return { skuObj, changes, zipCode };
-
     } catch (error) {
-        console.error(`❌ Error fetching inventory data for ${skuObj.name} in ${zipCode}:`, error);
+        console.error(`❌ Error checking inventory for ${skuObj.name} in ${zipCode}:`, error);
         return { skuObj, changes: ["❌ Error checking this SKU."], zipCode };
     }
 }
 
-// ✅ Send inventory updates to Discord
+// Send Inventory Updates
 async function sendInventoryUpdates() {
-    let fulfillment_nonce = await fetchNonce(); // Fetch nonce once before making requests
     let allChangesByZip = {};
 
     for (let zipCode of Object.keys(zipCodes)) {
         allChangesByZip[zipCode] = [];
 
         for (let skuObj of skuList) {
-            let result = await checkInventory(skuObj, zipCode, fulfillment_nonce);
+            let result = await checkInventory(skuObj, zipCode);
             allChangesByZip[zipCode].push(result);
         }
     }
@@ -142,42 +133,21 @@ async function sendInventoryUpdates() {
     fs.writeFileSync(inventoryFile, JSON.stringify(previousInventory, null, 2));
 
     for (let [zipCode, allChanges] of Object.entries(allChangesByZip)) {
-        let messageChunks = [];
-        let currentMessage = `**📋 Inventory Update for ${zipCode}:**\n`;
-        let changesExist = false;
-        const MAX_MESSAGE_LENGTH = 2000;
+        let message = `**📋 Inventory Update for ${zipCode}:**\n`;
+        let changesExist = allChanges.some(({ changes }) => changes.length > 0);
 
         allChanges.forEach(({ skuObj, changes }) => {
             if (changes.length > 0) {
-                changesExist = true;
-                let header = `\n📢 **${skuObj.name}** (${skuObj.sku}):\n`;
-                let changesText = changes.map(change => `- ${change}`).join("\n");
-
-                let potentialMessage = currentMessage + header + changesText + "\n";
-
-                if (potentialMessage.length > MAX_MESSAGE_LENGTH) {
-                    messageChunks.push(currentMessage);
-                    currentMessage = `**📋 Inventory Update for ${zipCode} (Continued):**\n` + header + changesText + "\n";
-                } else {
-                    currentMessage = potentialMessage;
-                }
+                message += `\n📢 **${skuObj.name}** (${skuObj.sku}):\n` + changes.map(c => `- ${c}`).join("\n");
             }
         });
 
         const channelId = changesExist ? zipCodes[zipCode] : NO_CHANGE_CHANNEL_ID;
-        const channel = client.channels.cache.get(channelId);
-
-        if (channel) {
-            for (let msg of messageChunks) {
-                await channel.send(msg);
-            }
-        } else {
-            console.error(`❌ Error: Unable to find the Discord channel for zip ${zipCode}`);
-        }
+        const channel = await client.channels.fetch(channelId);
+        if (channel) await channel.send(message);
     }
 }
 
-// ✅ Start the bot and check inventory
 client.once("ready", async () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
     await sendInventoryUpdates();
