@@ -5,7 +5,7 @@ const cheerio = require("cheerio");
 // SKU List
 const skuList = [
     { name: "Stagg Jr.", sku: "008800401858" },
-    { name: "Weller 12 YR", sku: "008800402773" },
+    { name: "Weller 12 YR", sku: "008800402774" },
     { name: "EHT SiB", sku: "008800400551" },
     { name: "M10 Rye", sku: "003938300228" },
     { name: "Birthday Bourbon", sku: "008112800289" },
