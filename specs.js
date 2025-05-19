@@ -32,6 +32,7 @@ const skuList = [
     { name: "Forta Reposado", sku: "750222196710" },
     { name: "Forta Anejo", sku: "750222196810" },
     { name: "Penelope 17year ALW", sku: "008835214260" },
+    { name: "EHT SiB SP", sku: "000001369090" },
 ];
 
 const zipCode = "75204";
@@ -138,7 +139,7 @@ async function sendInventoryUpdates() {
     let currentMessage = "**📋 Inventory Update:**\n";
     let changesExist = false;
 
-    const MAX_MESSAGE_LENGTH = 2000;
+    const MAX_MESSAGE_LENGTH = 1800;
 
     allChanges.forEach(({ skuObj, changes }) => {
         if (changes.length > 0) {
