@@ -2,7 +2,6 @@ const { Client, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
 const cheerio = require("cheerio");
 
-// SKU List
 const skuList = [
     { name: "Stagg Jr.", sku: "008800401858" },
     { name: "Weller 12 YR", sku: "008800402774" },
@@ -39,42 +38,35 @@ const zipCode = "75204";
 const radius = "100";
 const inventoryFile = "inventory.json";
 
-// Load previous inventory from file
 let previousInventory = {};
 if (fs.existsSync(inventoryFile)) {
     previousInventory = JSON.parse(fs.readFileSync(inventoryFile, "utf8"));
 }
 
-// Initialize Discord Bot with GitHub Secrets for token and channel
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 const CHANNEL_ID = process.env.CHANNEL_ID;
-const NO_CHANGE_CHANNEL_ID = "1334889254328733766"; // New channel for no-change updates
+const NO_CHANGE_CHANNEL_ID = "1334889254328733766";
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
-// ✅ Function to fetch the latest public fulfillment_nonce
 async function fetchNonce() {
     try {
         const response = await fetch("https://specsonline.com");
         const body = await response.text();
         const $ = cheerio.load(body);
-
-        // Extract the nonce from JavaScript
         const scriptContent = $('script:contains("fulfillmentJS")').html();
         const nonceMatch = scriptContent?.match(/"nonce":"(.*?)"/);
         const nonce = nonceMatch ? nonceMatch[1] : null;
-
         if (!nonce) throw new Error("⚠️ Could not find fulfillment_nonce.");
         console.log(`✅ Found Nonce: ${nonce}`);
         return nonce;
     } catch (error) {
         console.error("❌ Error fetching nonce:", error);
-        return "7bf1b33b1e"; // Fallback to last known public nonce
+        return "7bf1b33b1e";
     }
 }
 
-// ✅ Function to check inventory
 async function checkInventory(skuObj) {
-    const fulfillment_nonce = await fetchNonce(); // Always get the latest nonce
+    const fulfillment_nonce = await fetchNonce();
 
     try {
         const response = await fetch("https://specsonline.com/wp-admin/admin-ajax.php", {
@@ -124,7 +116,6 @@ async function checkInventory(skuObj) {
     }
 }
 
-// ✅ Function to send inventory updates to Discord
 async function sendInventoryUpdates() {
     let allChanges = [];
 
@@ -138,37 +129,38 @@ async function sendInventoryUpdates() {
     let messageChunks = [];
     let currentMessage = "**📋 Inventory Update:**\n";
     let changesExist = false;
+    const MAX_MESSAGE_LENGTH = 2000;
 
-    const MAX_MESSAGE_LENGTH = 1800;
-
-    allChanges.forEach(({ skuObj, changes }) => {
+    for (const { skuObj, changes } of allChanges) {
         if (changes.length > 0) {
             changesExist = true;
-            let header = `\n📢 **${skuObj.name}** (${skuObj.sku}):\n`;
-            let changesText = changes.map(change => `- ${change}`).join("\n");
+            const header = `\n📢 **${skuObj.name}** (${skuObj.sku}):\n`;
+            let block = header;
 
-            let potentialMessage = currentMessage + header + changesText + "\n";
-
-            if (potentialMessage.length > MAX_MESSAGE_LENGTH) {
-                // If exceeding limit, store current message and start a new one
-                messageChunks.push(currentMessage);
-                currentMessage = "**📋 Inventory Update (Continued):**\n" + header + changesText + "\n";
-            } else {
-                currentMessage = potentialMessage;
+            for (let change of changes) {
+                let line = `- ${change}\n`;
+                if ((currentMessage + block + line).length > MAX_MESSAGE_LENGTH) {
+                    messageChunks.push(currentMessage);
+                    currentMessage = "**📋 Inventory Update (Continued):**\n";
+                    block = header;
+                }
+                block += line;
             }
+
+            currentMessage += block;
         }
-    });
+    }
 
     if (!changesExist) {
         currentMessage += "\n✅ No changes detected.\nChecked SKUs:\n";
-        skuList.forEach(({ name, sku }) => {
-            let skuEntry = `- ${name} (${sku})\n`;
-            if ((currentMessage.length + skuEntry.length) > MAX_MESSAGE_LENGTH) {
+        for (let { name, sku } of skuList) {
+            let line = `- ${name} (${sku})\n`;
+            if ((currentMessage + line).length > MAX_MESSAGE_LENGTH) {
                 messageChunks.push(currentMessage);
                 currentMessage = "**📋 Inventory Update (Continued):**\n";
             }
-            currentMessage += skuEntry;
-        });
+            currentMessage += line;
+        }
     }
 
     if (currentMessage.trim().length > 0) {
@@ -187,14 +179,10 @@ async function sendInventoryUpdates() {
     }
 }
 
-
-
-// ✅ Run inventory check every 6 hours
 client.once("ready", async () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
-    await sendInventoryUpdates();  // Run inventory check once when the bot starts
-    client.destroy(); // Shut down the bot after sending the message
+    await sendInventoryUpdates();
+    client.destroy();
 });
 
-// ✅ Start the bot
 client.login(DISCORD_TOKEN);
