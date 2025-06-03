@@ -2824,7 +2824,7 @@
     "Lavon": 0
   },
   "072105900371": {
-    "New Road": 1,
+    "New Road": 0,
     "Waco": 0,
     "Bryant Irvin": 0,
     "Hebron": 0,
@@ -3182,7 +3182,7 @@
     "Westlake": 0,
     "Arlington": 0,
     "Lewisville": 0,
-    "Denton": 12,
+    "Denton": 10,
     "Little Elm": 0,
     "Rowlett": 0,
     "Sachse": 0,
@@ -3269,7 +3269,7 @@
     "Carrier Parkway": 0,
     "McKinney": 1,
     "Burleson": 0,
-    "Lavon": 25
+    "Lavon": 23
   },
   "008835214184": {
     "New Road": 0,
