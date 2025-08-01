@@ -1,19 +1,20 @@
-name: Inventory Tracker Bot 
+name: Inventory Tracker Bot
 
 on:
   schedule:
     - cron: "*/20 * * * *"  # Runs every 20 minutes
-  workflow_dispatch:
-
+  workflow_dispatch:  # Allows manual trigger
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}  # Needed for committing changes
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # Ensures full history so pull --rebase works
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -41,6 +42,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main || echo "Nothing to rebase"
           git add inventory.json
           git commit -m "Update inventory.json [Bot Run]" || echo "No changes to commit"
           git push
