@@ -32,6 +32,7 @@ const skuList = [
     { name: "Forta Anejo", sku: "750222196810" },
     { name: "Penelope 17year ALW", sku: "008835214260" },
     { name: "EHT SiB SP", sku: "000001369090" },
+    { name: "ER 12", sku: "008800407245" },
 ];
 
 const zipCode = "75204";

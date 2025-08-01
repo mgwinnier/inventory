@@ -2,9 +2,7 @@ name: Inventory Tracker Bot
 
 on:
   schedule:
-    - cron: "30 13 * * *"  # 7:30 AM CST/CDT
-    - cron: "45 13 * * *"  # 7:45 AM CST/CDT
-    - cron: "30 14 * * *"  # 8:30 AM CST/CDT
+    - cron: "*/20 * * * *"  # Runs every 20 minutes
   workflow_dispatch:
 
 
