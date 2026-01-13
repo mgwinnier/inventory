@@ -113,8 +113,9 @@ async function checkInventory(skuObj) {
 
     } catch (error) {
         console.error(`❌ Error fetching inventory data for ${skuObj.name}:`, error);
-        return { skuObj, changes: ["❌ Error checking this SKU."] };
+        return { skuObj, changes: [] }; // 👈 silently ignore in Discord
     }
+
 }
 
 async function sendInventoryUpdates() {
@@ -122,8 +123,11 @@ async function sendInventoryUpdates() {
 
     for (let skuObj of skuList) {
         let result = await checkInventory(skuObj);
-        allChanges.push(result);
+        if (result) {
+            allChanges.push(result);
+        }
     }
+
 
     fs.writeFileSync(inventoryFile, JSON.stringify(previousInventory, null, 2));
 
