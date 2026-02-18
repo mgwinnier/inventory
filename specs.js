@@ -33,6 +33,9 @@ const skuList = [
     { name: "Penelope 17year ALW", sku: "008835214260" },
     { name: "EHT SiB SP", sku: "000001369090" },
     { name: "ER 12", sku: "008800407245" },
+    { name: "KOK 1", sku: "008218400922" },
+    { name: "KOK 2", sku: "008218400923" },
+    { name: "KOK 3", sku: "008218400924" },
 ];
 
 const zipCode = "75204";
